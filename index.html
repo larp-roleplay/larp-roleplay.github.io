@@ -142,78 +142,96 @@ body{display:flex;height:100vh;overflow:hidden;background:#0a0a0f;color:var(--te
 
 <script>
 const API_URL = "https://api.allorigins.win/raw?url=" + encodeURIComponent("http://prem-eu1.bot-hosting.net:20418/getcontents");
-let discordId=localStorage.getItem("discordId")||"";
-let token=localStorage.getItem("token")||"";
-let contentData={};
 
-document.getElementById("accountBtn").onclick=()=>{
-  document.getElementById("modalOverlay").style.display="flex";
-  document.getElementById("discordIdInput").value=discordId;
-  document.getElementById("tokenInput").value=token;
+let discordId = localStorage.getItem("discordId") || "";
+let token = localStorage.getItem("token") || "";
+let contentData = {};
+
+document.getElementById("accountBtn").onclick = () => {
+  document.getElementById("modalOverlay").style.display = "flex";
+  document.getElementById("discordIdInput").value = discordId;
+  document.getElementById("tokenInput").value = token;
 };
-document.getElementById("saveModalBtn").onclick=()=>{
-  discordId=document.getElementById("discordIdInput").value.trim();
-  token=document.getElementById("tokenInput").value.trim();
-  localStorage.setItem("discordId",discordId);
-  localStorage.setItem("token",token);
-  document.getElementById("modalOverlay").style.display="none";
+
+document.getElementById("saveModalBtn").onclick = () => {
+  discordId = document.getElementById("discordIdInput").value.trim();
+  token = document.getElementById("tokenInput").value.trim();
+  localStorage.setItem("discordId", discordId);
+  localStorage.setItem("token", token);
+  document.getElementById("modalOverlay").style.display = "none";
   fetchContent();
 };
 
 async function fetchContent(){
-  const payload={};
-  if(discordId) payload.discordid=discordId;
-  if(token) payload.token=token;
-  try{
-    const res=await fetch(API_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
-    const data=await res.json();
-    if(data.success){ contentData=data.content; buildSidebar(); }
-    else alert("Error: "+(data.reasons?.join(",")||"Unknown"));
-  }catch(e){ alert("Fetch failed: "+e.message);}
+  if(!discordId || !token) return;
+
+  // Use GET via query params
+  const url = API_URL + `?discordid=${encodeURIComponent(discordId)}&token=${encodeURIComponent(token)}`;
+
+  try {
+    const res = await fetch(url); // GET
+    const data = await res.json();
+    if(data.success){ 
+      contentData = data.content; 
+      buildSidebar(); 
+    } else {
+      alert("Error: " + (data.reasons?.join(",") || "Unknown"));
+    }
+  } catch(e){ 
+    alert("Fetch failed: " + e.message);
+  }
 }
 
 function buildSidebar(){
-  const sidebar=document.getElementById("sidebar");
-  sidebar.querySelectorAll(".label-btn,.section-dropdown").forEach(el=>el.remove());
+  const sidebar = document.getElementById("sidebar");
+  sidebar.querySelectorAll(".label-btn,.section-dropdown").forEach(el => el.remove());
 
-  Object.values(contentData).forEach(label=>{
-    const btn=document.createElement("div");
-    btn.className="label-btn";
-    btn.innerHTML=`<span>${label.label}</span><span class="arrow">▸</span>`;
+  Object.values(contentData).forEach(label => {
+    const btn = document.createElement("div");
+    btn.className = "label-btn";
+    btn.innerHTML = `<span>${label.label}</span><span class="arrow">▸</span>`;
     sidebar.appendChild(btn);
 
     if(label.sections){
-      const dropdown=document.createElement("div");
-      dropdown.className="section-dropdown";
-      Object.values(label.sections).forEach(section=>{
-        const secBtn=document.createElement("div");
-        secBtn.className="label-btn inner-btn";
-        secBtn.textContent=section.label;
-        secBtn.onclick=()=> renderSection(section);
+      const dropdown = document.createElement("div");
+      dropdown.className = "section-dropdown";
+      Object.values(label.sections).forEach(section => {
+        const secBtn = document.createElement("div");
+        secBtn.className = "label-btn inner-btn";
+        secBtn.textContent = section.label;
+        secBtn.onclick = () => renderSection(section);
         dropdown.appendChild(secBtn);
       });
-      btn.onclick=()=>{
-        const open=dropdown.classList.toggle("show");
-        btn.querySelector(".arrow").style.transform=open?"rotate(90deg)":"rotate(0deg)";
+      btn.onclick = () => {
+        const open = dropdown.classList.toggle("show");
+        btn.querySelector(".arrow").style.transform = open ? "rotate(90deg)" : "rotate(0deg)";
       };
       sidebar.appendChild(dropdown);
     } else if(label.groups){
-      btn.onclick=()=> renderGroups(label.groups);
-      btn.querySelector(".arrow").style.display="none";
+      btn.onclick = () => renderGroups(label.groups);
+      btn.querySelector(".arrow").style.display = "none";
     }
   });
 }
 
 function renderGroups(groups){
-  const c=document.getElementById("content"); c.innerHTML="";
-  Object.values(groups).forEach(g=>{
-    const name=document.createElement("div"); name.className="group-name"; name.textContent=g.heading;
-    const contentEl=document.createElement("div"); contentEl.className="group-content"; contentEl.textContent=g.content.join(" ");
-    c.appendChild(name); c.appendChild(contentEl);
+  const c = document.getElementById("content"); 
+  c.innerHTML = "";
+  Object.values(groups).forEach(g => {
+    const name = document.createElement("div"); 
+    name.className = "group-name"; 
+    name.textContent = g.heading;
+    const contentEl = document.createElement("div"); 
+    contentEl.className = "group-content"; 
+    contentEl.textContent = Array.isArray(g.content) ? g.content.join(" ") : g.content;
+    c.appendChild(name); 
+    c.appendChild(contentEl);
   });
 }
 
-function renderSection(section){ if(section.groups) renderGroups(section.groups); }
+function renderSection(section){ 
+  if(section.groups) renderGroups(section.groups); 
+}
 
 fetchContent();
 </script>
