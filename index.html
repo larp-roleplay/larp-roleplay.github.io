@@ -141,7 +141,7 @@ body{display:flex;height:100vh;overflow:hidden;background:#0a0a0f;color:var(--te
 </div>
 
 <script>
-const API_URL="https://prem-eu1.bot-hosting.net:20418/getcontents";
+const API_URL = "https://api.allorigins.win/raw?url=" + encodeURIComponent("http://prem-eu1.bot-hosting.net:20418/getcontents");
 let discordId=localStorage.getItem("discordId")||"";
 let token=localStorage.getItem("token")||"";
 let contentData={};
